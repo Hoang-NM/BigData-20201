@@ -1,0 +1,190 @@
+version: "3"
+
+services:
+  namenode:
+    build: ./namenode
+    container_name: namenode
+    restart: always    
+    ports:
+      - "9870:9870"
+      - "9000:9000"
+    volumes:
+      - hadoop_namenode:/hadoop/dfs/name
+    environment:
+      - CLUSTER_NAME=test
+    env_file:
+      - ./hadoop.env
+  
+  datanode1:
+    build: ./datanode
+    container_name: datanode1
+    restart: always
+    depends_on:
+      - namenode
+    volumes:
+      - hadoop_datanode1:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+    env_file:
+      - ./hadoop.env
+  
+  datanode2:
+    build: ./datanode
+    container_name: datanode2
+    restart: always
+    depends_on:
+      - namenode
+    volumes:
+      - hadoop_datanode2:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+    env_file:
+      - ./hadoop.env
+  
+  datanode3:
+    build: ./datanode
+    container_name: datanode3
+    restart: always
+    depends_on:
+      - namenode
+    volumes:
+      - hadoop_datanode3:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+    env_file:
+      - ./hadoop.env
+  
+  datanode4:
+    build: ./datanode
+    container_name: datanode4
+    restart: always
+    depends_on:
+      - namenode
+    volumes:
+      - hadoop_datanode4:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+    env_file:
+      - ./hadoop.env
+
+  resourcemanager:
+    build: ./resourcemanager
+    container_name: resourcemanager
+    restart: always
+    depends_on:
+      - namenode
+      - datanode1
+      - datanode2
+      - datanode3
+      - datanode4 
+    #ports:
+    #  - 8089:8089
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode:9864"
+    env_file:
+      - ./hadoop.env
+  
+  nodemanager1:
+    build: ./nodemanager
+    container_name: nodemanager
+    restart: always
+    depends_on:
+      - namenode
+      - datanode1
+      - datanode2
+      - datanode3
+      - datanode4 
+    #ports:
+    #  - 8042:8042
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode:9864 resourcemanager:8088"
+    env_file:
+      - ./hadoop.env
+
+  historyserver:
+    build: ./historyserver
+    container_name: historyserver
+    depends_on:
+      - namenode
+      - datanode1
+      - datanode2
+      - datanode3 
+      - datanode4 
+    #ports:
+    #  - 8188:8188
+    volumes:
+      - hadoop_historyserver:/hadoop/yarn/timeline
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode:9864 resourcemanager:8088"
+    env_file:
+      - ./hadoop.env
+
+  pyspark:
+    image: jupyter/pyspark-notebook
+    container_name: pyspark-notebook
+    restart: always
+    ports:
+      - 8888:8888            
+    volumes:
+      - ./notebook/:/home/jovyan/work/  
+      
+  spark-master:
+    build: ./spark-master
+    container_name: spark-master
+    ports:
+      - 8080:8080
+      - 7077:7077
+    env_file:
+      - ./hadoop.env
+      
+  spark-worker1:
+    build: ./spark-worker
+    container_name: spark-worker1
+    depends_on:
+      - spark-master
+    restart: always
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+    env_file:
+      - ./hadoop.env
+
+  spark-worker2:
+    build: ./spark-worker
+    container_name: spark-worker2 
+    depends_on:
+      - spark-master
+    restart: always
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+    env_file:
+      - ./hadoop.env
+
+  spark-worker3:
+    build: ./spark-worker
+    container_name: spark-worker3 
+    depends_on:
+      - spark-master
+    restart: always
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+    env_file:
+      - ./hadoop.env
+
+  spark-worker4:
+    build: ./spark-worker
+    container_name: spark-worker4
+    depends_on:
+      - spark-master
+    restart: always
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+    env_file:
+      - ./hadoop.env
+  
+volumes:
+  hadoop_namenode:
+  hadoop_datanode1:
+  hadoop_datanode2:
+  hadoop_datanode3:
+  hadoop_datanode4:
+  hadoop_historyserver:
